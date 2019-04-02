@@ -66,7 +66,11 @@ NNetIterations <- function(X.mat,y.vec,max.iterations,step.size,n.hidden.units,i
     stop("y.vec must be a logical vector of the same number of rows as X.mat!")
   }
 
-  n.obeservations <- nrow(X.mat)
+  if ((y.vec == 0)|| (y.vec == 1))
+    is.binary = 1 else
+    is.binary = 0
+
+  n.observations <- nrow(X.mat)
   n.features <- ncol(X.mat)
 
   #compute a scaled input matrix, which has mean=0 and sd=1 for each column
@@ -87,12 +91,52 @@ NNetIterations <- function(X.mat,y.vec,max.iterations,step.size,n.hidden.units,i
   X.scaled.validation = X.scale.mat[validation.index,]
   y.validation = y.vec[validation.index]
 
-  pred.mat = matrix(0,n.obeservation, max.iterations)
-  W.mat = matrix(rnorm(n.obeservations*n.hidden.units),n.features,n.hidden.units)
+  pred.mat = matrix(0,n.observations, max.iterations)
+  W.mat = matrix(rnorm(n.features*n.hidden.units),n.features,n.hidden.units)
   v.vec = rnorm(n.hidden.units)
+  v.gradient=rep(0,n.hidden.units)
+  w.gradient=matrix(0,n.features,n.hidden.units)
+  intercept.vec = rep(0,n.obeservations)
+
 
   sigmoid = function(x){
     return(1/(1+exp(-x)))
+  }
+
+  sigmoid_return=function(x){
+    return(exp(-x)/(1+exp(-x))^2)
+
+  }
+  for(iteration in 1:max.iterations){
+    for (index in 1:dim(X.scaled.train)[1]){
+      v.vec = as.vector(v.vec)
+      Xi.train.vec=X.scaled.train[index,]
+      Xi.train.a=Xi.train.vec%*%W.mat
+      Xi.train.z=sigmoid(Xi.train.a)
+      Xi.train.b=Xi.train.z%*%v.vec
+    # if (is.binary)
+       #yi.hat = sigmoid(Xi.train.b) else
+      yi.hat=Xi.train.b
+      v.gradient.i=0.5*(yi.hat-y.train[index])%*%Xi.train.z
+      W.gradient.i=0.5*t(Xi.train.a%*%diag(sigmoid_return(v.vec)))%*%(yi.hat-y.train[index])%*%X.scaled.train[index,]
+      v.gradient = v.gradient + v.gradient.i
+      W.gradient = w.gradient + t(w.gradient.i)
+    }
+    v.vec = v.vec-step.size * (v.gradient / n.observations)
+    W.mat = W.mat - step.size * (W.gradient / n.observations)
+    pred.vec=sigmoid(X.scaled.mat%*%W.mat)%*%as.vector(v.vec)
+   # if(is.binary)
+    # pred.vec = sigmoid(pred.vec)
+    pred.mat[,iteration]= pred.vec
+    intercept.vec = intercept.vec - step.size * (yi.hat-y)
+
+
+  }
+ result.list = list(
+   pred.mat = pred.mat,
+   W.mat = W.mat,
+   v.vec = v.vec
+ )
   }
 
 
@@ -102,4 +146,7 @@ NNetIterations <- function(X.mat,y.vec,max.iterations,step.size,n.hidden.units,i
 
 
 
-}
+
+
+
+
