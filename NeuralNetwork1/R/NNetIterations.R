@@ -37,7 +37,8 @@
 
 
 
-NNetIterations <- function(X.mat,y.vec,max.iterations,step.size,n.hidden.units,is.train){
+#NNetIterations <- function(X.mat,y.vec,max.iterations,step.size,n.hidden.units,is.train){
+NNetIterations <- function(X.mat,y.vec,max.iterations,step.size,n.hidden.units){
 
 
   if(!all(is.matrix(X.mat),is.numeric(X.mat))){
@@ -62,9 +63,9 @@ NNetIterations <- function(X.mat,y.vec,max.iterations,step.size,n.hidden.units,i
     stop("n.hidden.units must be an interger greater or equal to 1!")
   }
 
-  if(!all(is.logical(is.train), length(is.train)==nrow(X.mat))){
-    stop("y.vec must be a logical vector of the same number of rows as X.mat!")
-  }
+  # if(!all(is.logical(is.train), length(is.train)==nrow(X.mat))){
+  #   stop("y.vec must be a logical vector of the same number of rows as X.mat!")
+  # }
 
   if ((y.vec == 0)|| (y.vec == 1))
     is.binary = 1 else
@@ -84,19 +85,19 @@ NNetIterations <- function(X.mat,y.vec,max.iterations,step.size,n.hidden.units,i
   X.scaled.mat=t(t(X.temp)/X.mat.sd)
 
   #find(split) the train set and validation set
-  train.index = which(is.train==TRUE)
-  validation.index = which(is.train!=TRUE)
-  X.scaled.train = X.scale.mat[train.index,]
-  y.train = y.vec[train.index]
-  X.scaled.validation = X.scale.mat[validation.index,]
-  y.validation = y.vec[validation.index]
+  # train.index = which(is.train==TRUE)
+  # validation.index = which(is.train!=TRUE)
+  # X.scaled.train = X.scaled.mat[train.index,]
+  # y.train = y.vec[train.index]
+  # X.scaled.validation = X.scaled.mat[validation.index,]
+  # y.validation = y.vec[validation.index]
 
   pred.mat = matrix(0,n.observations, max.iterations)
   W.mat = matrix(rnorm(n.features*n.hidden.units),n.features,n.hidden.units)
   v.vec = rnorm(n.hidden.units)
   v.gradient=rep(0,n.hidden.units)
-  w.gradient=matrix(0,n.features,n.hidden.units)
-  intercept.vec = rep(0,n.obeservations)
+  W.gradient=matrix(0,n.features,n.hidden.units)
+  interception.vec = rep(0,n.observations)
 
 
   sigmoid = function(x){
@@ -108,38 +109,65 @@ NNetIterations <- function(X.mat,y.vec,max.iterations,step.size,n.hidden.units,i
 
   }
   for(iteration in 1:max.iterations){
-    for (index in 1:dim(X.scaled.train)[1]){
-      v.vec = as.vector(v.vec)
-      Xi.train.vec=X.scaled.train[index,]
-      Xi.train.a=Xi.train.vec%*%W.mat
-      Xi.train.z=sigmoid(Xi.train.a)
-      Xi.train.b=Xi.train.z%*%v.vec
-    # if (is.binary)
-       #yi.hat = sigmoid(Xi.train.b) else
-      yi.hat=Xi.train.b
-      v.gradient.i=0.5*(yi.hat-y.train[index])%*%Xi.train.z
-      W.gradient.i=0.5*t(Xi.train.a%*%diag(sigmoid_return(v.vec)))%*%(yi.hat-y.train[index])%*%X.scaled.train[index,]
-      v.gradient = v.gradient + v.gradient.i
-      W.gradient = w.gradient + t(w.gradient.i)
+   #  for (index in 1:dim(X.scaled.train)[1]){
+   #    v.vec = as.vector(v.vec)
+   #    Xi.train.vec=X.scaled.train[index,]
+   #    Xi.train.a=Xi.train.vec%*%W.mat
+   #    Xi.train.z=sigmoid(Xi.train.a)
+   #    Xi.train.b=Xi.train.z%*%v.vec
+   #  # if (is.binary)
+   #     #yi.hat = sigmoid(Xi.train.b) else
+   #    yi.hat=Xi.train.b
+   #    v.gradient.i=(yi.hat-y.train[index])%*%Xi.train.z
+   #    W.gradient.i=t(Xi.train.a%*%diag(sigmoid_return(v.vec)))%*%(yi.hat-y.train[index])%*%X.scaled.train[index,]
+   #    v.gradient = v.gradient + v.gradient.i
+   #    W.gradient = W.gradient + t(W.gradient.i)
+   #  }
+   #  v.vec = v.vec-step.size * (v.gradient / n.observations)
+   #  W.mat = W.mat - step.size * (W.gradient / n.observations)
+   #  pred.vec=sigmoid(X.scaled.mat%*%W.mat)%*%as.vector(v.vec)
+   # # if(is.binary)
+   #  # pred.vec = sigmoid(pred.vec)
+   #  pred.mat[,iteration]= pred.vec
+   #  intercept.vec = intercept.vec - step.size * mean(pred.vec-y.vec)
+    X.a.mat = X.scaled.mat%*%W.mat
+    X.z.mat = sigmoid(X.a.mat)
+   # X.b.vec = X.z.mat %*% v.vec + interception.vec
+    X.b.vec = X.z.mat %*% v.vec
+
+    if(is.binary){
+      ##binary classification loss
+    }else{
+    ##if regression
+    y.hat = X.b.vec
+    delta.v = X.b.vec - y.vec
+    delta.W = diag(as.vector(delta.v)) %*% sigmoid_return(X.a.mat)
+    v.gradient = t(X.z.mat) %*% delta.v/n.observations
+    W.gradient = t(X.scaled.mat) %*% delta.W / n.observations
+    v.vec = v.vec - step.size*v.gradient
+    W.mat = W.mat - step.size*W.gradient
+    #interception.vec = interception.vec - step.size * delta.v
     }
-    v.vec = v.vec-step.size * (v.gradient / n.observations)
-    W.mat = W.mat - step.size * (W.gradient / n.observations)
-    pred.vec=sigmoid(X.scaled.mat%*%W.mat)%*%as.vector(v.vec)
-   # if(is.binary)
-    # pred.vec = sigmoid(pred.vec)
-    pred.mat[,iteration]= pred.vec
-    intercept.vec = intercept.vec - step.size * (yi.hat-y)
-
-
+    pred.mat[,iteration]=sigmoid(X.scaled.mat %*% W.mat) %*% v.vec
   }
+ # pred.mat = sigmoid(X.scaled.mat %*% W.mat) %*% v.vec
+
+    #v.vec = c(interception.vec,as.vector(v.vec))
+
+
+
  result.list = list(
    pred.mat = pred.mat,
    W.mat = W.mat,
-   v.vec = v.vec
+   v.vec = v.vec,
+   prediction = function(testX.mat){
+     prediction.vec = sigmoid(cbind(1,testX.mat) %*% W.mat) %*% v.vec
+     return (prediction.vec)
+   }
  )
+
+ return(pred.mat)
   }
-
-
 
 
 

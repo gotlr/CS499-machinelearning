@@ -4,8 +4,7 @@
 \alias{NNetIterations}
 \title{Neural networks for regression and binary classification}
 \usage{
-NNetIterations(X.mat, y.vec, max.iterations, step.size, n.hidden.units,
-  is.train)
+NNetIterations(X.mat, y.vec, max.iterations, step.size, n.hidden.units)
 }
 \arguments{
 \item{X.mat}{(feature matrix, n_observations x n_features)}
