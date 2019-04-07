@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1554619294088.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1284096627",
+    "id" : "4830F8CF",
+    "lastKnownWriteTime" : 1554618680,
+    "last_content_update" : 1554618680,
+    "path" : "C:/cs499-project/project3/Neural Network1/NeuralNetwork1/R/NNetEarlyStoppingCV.R",
+    "project_path" : "R/NNetEarlyStoppingCV.R",
+    "properties" : {
+        "cursorPosition" : "52,53",
+        "scrollLine" : "19",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 4,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

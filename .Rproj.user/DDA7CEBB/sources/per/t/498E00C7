@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1554230671806.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2106949926",
+    "id" : "498E00C7",
+    "lastKnownWriteTime" : 1554618474,
+    "last_content_update" : -2147483648,
+    "path" : "C:/cs499-project/project3/Neural Network1/NeuralNetwork1/R/NNetIterations.R",
+    "project_path" : "R/NNetIterations.R",
+    "properties" : {
+        "cursorPosition" : "39,88",
+        "scrollLine" : "27",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
