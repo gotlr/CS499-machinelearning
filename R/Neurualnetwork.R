@@ -64,7 +64,7 @@ NNetIterations <- function(X.mat,y.vec,max.iterations,step.size,n.hidden.units,i
   }
 
   if(!all(is.logical(is.train), length(is.train)==nrow(X.mat))){
-    stop("y.vec must be a logical vector of the same number of rows as X.mat!")
+    stop("is.train must be a logical vector of the same number of rows as X.mat!")
    }
 
   if (all(y.vec %in% c(0,1)))
@@ -75,7 +75,9 @@ NNetIterations <- function(X.mat,y.vec,max.iterations,step.size,n.hidden.units,i
   n.features <- ncol(X.mat)
 
 
-  #find(split) the train set and validation set
+ #find(split) the train set and validation set
+
+
   train.index = which(is.train==TRUE)
   validation.index = which(is.train!=TRUE)
   X.train = X.mat[train.index,]
@@ -84,22 +86,28 @@ NNetIterations <- function(X.mat,y.vec,max.iterations,step.size,n.hidden.units,i
   y.validation = y.vec[validation.index]
 
 
+
+
+
+
+
   #compute a scaled input matrix, which has mean=0 and sd=1 for each column
-  #X.scale.mat=scale(X.mat,center = TRUE,scale = TRUE)
-  X.train.min = colMeans(X.train)
 
-  X.temp=t(t(X.train)-X.train.min)
+  X.scaled.train = scale(X.train,center = TRUE,scale = TRUE)
 
-  X.train.sd=sqrt(colSums((X.temp)^2)/dim(X.train)[1])
+  X.scaled.validation = scale(X.validation,center = TRUE,scale = TRUE)
 
-  X.scaled.train=t(t(X.temp)/X.train.sd)
+  X.scaled.mat = scale(X.mat,center = TRUE,scale = TRUE)
+
+
+
 
 
   pred.mat = matrix(0,n.observations, max.iterations)
-  v.mat = matrix(rnorm((n.features+1)*n.hidden.units),n.features+1,n.hidden.units)
-  w.vec = rnorm(n.hidden.units+1)
+  v.mat = matrix(runif((n.features+1)*n.hidden.units),n.features+1,n.hidden.units)
+  w.vec = runif(n.hidden.units+1)
   v.gradient=rep(0,n.hidden.units+1)
-  W.gradient=matrix(0,n.features+1,n.hidden.units)
+  w.gradient=matrix(0,n.features+1,n.hidden.units)
 
 
   sigmoid = function(x){
@@ -107,36 +115,37 @@ NNetIterations <- function(X.mat,y.vec,max.iterations,step.size,n.hidden.units,i
   }
 
   desigmoid=function(x){
-    return(exp(-x)/(1+exp(-x))^2)
+    return(sigmoid(x)/(1-sigmoid(x)))
 
   }
   for(iteration in 1:max.iterations){
-    X.a.mat = cbind(1,X.scaled.train)%*%v.mat
+    X.a.mat = (cbind(1,X.scaled.train))%*%v.mat
     X.z.mat = sigmoid(X.a.mat)
     #X.b.vec = X.z.mat %*% v.vec + interception.vec
-    X.b.vec = cbind(1,X.z.mat) %*% w.vec
+    X.b.vec = (cbind(1,X.z.mat)) %*% w.vec
 
-    if(is.binary){
-    ##classification
-    pred.mat[,iteration] = sigmoid(cbind(1,sigmoid(cbind(1,X.mat)%*%v.mat))%*%w.vec)
-    y.tilde.train = y.train
-    y.tilde.train[which(y.tilde.train==0)] = -1 # change y into non-zero number
-    delta.w = -y.train/(1+exp(y.train*X.b.vec))
-    delta.v = diag(as.vector(delta.w)) %*% desigmoid(X.a.mat)
-    }else{
+     if(is.binary){
+     ##binary classification
+     pred.mat[,iteration] = sigmoid(cbind(1,sigmoid(cbind(1,X.scaled.mat)%*%v.mat))%*%w.vec)
+     y.tilde.train = y.train
+     y.tilde.train[which(y.tilde.train==0)] = -1 # change y into non-zero number
+     delta.w = -y.train/(1+exp(y.train*X.b.vec))
+     delta.v = diag(as.vector(delta.w)) %*% desigmoid(X.a.mat)
+     }else{
 
 
     ##if regression
-    #pred.mat[,iteration] = x.b.vec
-    pred.mat[,iteration] = cbind(1,sigmoid(cbind(1,X.mat)%*%v.mat))%*%w.vec
+    #pred.mat[train.index,iteration] = cbind(1,sigmoid(cbind(1,X.scaled.train)%*%v.mat))%*%w.vec
+    #pred.mat[validation.index,iteration] = cbind(1,sigmoid(cbind(1,X.scaled.validation)%*%v.mat))%*%w.vec
+    #pred.mat[,iteration] = cbind(1,sigmoid(cbind(1,X.scaled.mat)%*%v.mat))%*%w.vec
     delta.w = X.b.vec - y.train
     delta.v = diag(as.vector(delta.w)) %*% desigmoid(X.a.mat)
+    #
+     }
 
-    }
 
 
-
-    w.gradient = (t(cbind(1,X.z.mat)) %*% delta.w)/n.observations
+    w.gradient = (t(cbind(1,X.z.mat))%*%delta.w)/n.observations
     v.gradient = (t(cbind(1,X.scaled.train)) %*% delta.v)/ n.observations
     w.vec = w.vec - step.size*as.vector(w.gradient)
     v.mat = v.mat - step.size*v.gradient
@@ -148,20 +157,73 @@ NNetIterations <- function(X.mat,y.vec,max.iterations,step.size,n.hidden.units,i
 
 
 
- result.list = list(
-   pred.mat = pred.mat,
-   W.mat = W.mat,
-   v.vec = v.vec,
-   prediction = function(testX.mat){
-     prediction.vec = sigmoid(cbind(1,testX.mat) %*% W.mat) %*% v.vec
-     return (prediction.vec)
-   }
- )
-
- return(result.list)
+ # result.list = list(
+ #   pred.mat = pred.mat,
+ #   v.mat = v.mat,
+ #   w.vec = w.vec,
+ #   prediction = function(testX.mat){
+ #     if(is.binary){
+ #     prediction.vec = sigmoid(cbind(1,sigmoid(cbind(1,testX.mat)%*%v.mat))%*%w.vec)
+ #     }else{
+ #
+ #     prediction.vec = cbind(1,sigmoid(cbind(1,testX.mat)%*%v.mat))%*%w.vec
+ #     }
+ #     return (prediction.vec)
+ #   }
+ # )
+ #
+ # return(result.list)
+  return(pred.mat)
   }
 
+NNetEarlyStoppingCV <-
+  function(X.mat, y.vec,fold.vec,max.iterations,step.size,n.hidden.units,n.folds = 4){
 
+
+    #fold.vec = sample(rep(1:n.folds), length(y.vec),TRUE)  in test file
+     mean.train.loss.vec =  rep(0,max.iterations)
+     mean.validation.loss.vec =  rep(0,max.iterations)
+     is.train = rep(TRUE,length(y.vec))
+
+
+
+
+    for(fold.number in 1:n.folds){
+
+       is.train[which(fold.vec == fold.number)] = FALSE
+       is.train[which(fold.vec != fold.number)] = TRUE
+       #X.scaled.mat = scale(X.train,center = TRUE,scale = TRUE)
+        #
+         train.index = which(is.train==TRUE)
+         validation.index = which(is.train!=TRUE)
+         X.train = X.mat[train.index,]
+         y.train = y.vec[train.index]
+         X.validation = X.mat[validation.index,]
+         y.validation = y.vec[validation.index]
+
+
+
+      return.list = NNetIterations(X.mat,y.vec,max.iterations,step.size,n.hidden.units,is.train)
+      prediction.train = return.list$pred.mat[train.index,]
+      prediction.validation =  return.list$pred.mat[validation.index,]
+
+
+       mean.train.loss.vec = mean.train.loss.vec + colMeans(abs(prediction.train - y.train))
+       mean.validation.loss.vec = mean.train.loss.vec + colMeans(abs(prediction.validation - y.validation))
+
+    }
+    selected.steps = which.min(mean.validation.loss.vec)
+
+
+
+    #result.list = list(
+     #mean.train.loss.vec = mean.train.loss.vec,
+     #mean.validation.loss.vec = mean.validation.loss.vec,
+     #selected.steps = selected.steps
+    #)
+
+    #return(result.list)
+  }
 
 
 
